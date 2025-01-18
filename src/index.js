@@ -75,7 +75,7 @@ module.exports = class X3UIClient {
             inbound.settings = JSON.parse(inbound.settings);
             inbound.streamSettings = JSON.parse(inbound.streamSettings);
             inbound.sniffing = JSON.parse(inbound.sniffing);
-            inbound.allocate = JSON.parse(inbound.allocate);
+            inbound.allocate = inbound.allocate && inbound.allocate.length > 0 ? JSON.parse(inbound.allocate) : {};
         }
         return inbound;
     }
