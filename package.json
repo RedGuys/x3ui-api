@@ -1,0 +1,20 @@
+{
+  "name": "x3ui-api",
+  "version": "1.0.0",
+  "description": "API client for x3ui panel",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": ["x3ui", "api", "client"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.5",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5"
+  }
+}
