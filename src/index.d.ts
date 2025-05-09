@@ -201,9 +201,17 @@ export interface ClientBuilder {
     setTgId(id: string): this;
 
     /**
-     * Build client configuration
+     * Build the client configuration
      */
-    build(): Promise<ClientSettings>;
+    build(): ClientSettings;
+
+    /**
+     * Generate connection link for this client
+     * @param host Host address
+     * @param port Optional port number, defaults to parent's port
+     * @param protocol Optional protocol, defaults to parent's protocol or 'vless'
+     */
+    getLink(host: string, port?: number, protocol?: string): string;
 }
 
 export interface RealityBuilder {
@@ -257,6 +265,13 @@ export interface RealityBuilder {
      */
     addClient(options?: Partial<ClientSettings>): ClientBuilder;
     
+    /**
+     * Get connection link for a client
+     * @param clientIndex Index of the client (defaults to 0)
+     * @param host Optional host address (defaults to listenIP or 'localhost')
+     */
+    getClientLink(clientIndex?: number, host?: string): string;
+
     /**
      * Build the final inbound config
      */

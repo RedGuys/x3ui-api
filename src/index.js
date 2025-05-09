@@ -72,9 +72,9 @@ module.exports = class X3UIClient {
 
     parseInbound(inbound) {
         if (this.parseJSONSettings) {
-            inbound.settings = JSON.parse(inbound.settings);
-            inbound.streamSettings = JSON.parse(inbound.streamSettings);
-            inbound.sniffing = JSON.parse(inbound.sniffing);
+            inbound.settings = inbound.settings && inbound.settings.length > 0 ? JSON.parse(inbound.settings) : {};
+            inbound.streamSettings = inbound.streamSettings && inbound.streamSettings.length > 0 ? JSON.parse(inbound.streamSettings) : {};
+            inbound.sniffing = inbound.sniffing && inbound.sniffing.length > 0 ? JSON.parse(inbound.sniffing) : {};
             inbound.allocate = inbound.allocate && inbound.allocate.length > 0 ? JSON.parse(inbound.allocate) : {};
         }
         return inbound;
@@ -196,7 +196,7 @@ class ClientBuilder {
         return this;
     }
 
-    async build() {
+    build() {
         return {
             id: this.id || crypto.randomUUID(),
             flow: this.flow,
@@ -209,6 +209,28 @@ class ClientBuilder {
             subId: this.subId || Math.random().toString(36).substring(2, 18),
             reset: this.reset
         };
+    }
+
+    getLink(host, port, protocol) {
+        const id = this.id || crypto.randomUUID();
+        const settings = this.parent.streamSettings?.realitySettings;
+        if (!settings) throw new Error('Reality settings not found');
+
+        port = port || this.parent.port;
+        protocol = protocol || this.parent.protocol || 'vless';
+
+        const params = new URLSearchParams({
+            security: this.parent.streamSettings?.security || 'reality',
+            sni: settings.serverNames[0],
+            fp: settings.settings.fingerprint,
+            pbk: settings.settings.publicKey,
+            sid: settings.shortIds[0],
+            spx: settings.settings.spiderX || '/',
+            type: this.parent.streamSettings?.network || 'tcp',
+            encryption: this.parent.settings?.decryption || 'none'
+        });
+
+        return `${protocol}://${id}@${host}:${port}?${params.toString()}#${encodeURIComponent(this.email || 'default')}`;
     }
 }
 
@@ -303,8 +325,27 @@ class RealityBuilder {
         if (options.totalGB) builder.setTotalGB(options.totalGB);
         if (options.expiryTime) builder.setExpiryTime(options.expiryTime);
         if (options.tgId) builder.setTgId(options.tgId);
+        builder.parent.streamSettings = {
+            realitySettings: {
+                serverNames: this.serverNames,
+                settings: {
+                    fingerprint: this.fingerprint,
+                    publicKey: this.publicKey,
+                    spiderX: '/'
+                },
+                shortIds: this.shortIds
+            }
+        };
         this.clients.push(builder);
         return builder;
+    }
+
+    getClientLink(clientIndex = 0, host) {
+        if (clientIndex < 0 || clientIndex >= this.clients.length) {
+            throw new Error('Invalid client index');
+        }
+        const client = this.clients[clientIndex];
+        return client.getLink(host || this.listenIP || 'localhost', this.port);
     }
 
     generateRandomPort() {
