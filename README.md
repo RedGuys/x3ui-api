@@ -13,7 +13,9 @@ npm install x3ui-api
 - Authentication with x3ui panel
 - Get system statistics (CPU, memory, network, etc.)
 - Manage inbounds (list, add, update, delete)
-- Convenient Reality inbound builder
+- Protocol-specific builders with fluent API:
+  - VLESS with Reality support
+  - VMess with HTTP Upgrade support
 - Client management with fluent API
 - TypeScript support
 
@@ -59,15 +61,72 @@ async function main() {
 main();
 ```
 
-### Creating a Reality Inbound
+### Creating a VMess Inbound
+
+The library provides a convenient builder pattern for creating VMess inbounds with HTTP Upgrade:
+
+```javascript
+const X3UIClient = require('x3ui-api');
+const vmess = require('x3ui-api/src/protocols/vmess');
+
+const client = new X3UIClient({
+  baseURL: 'http://your-x3ui-panel.com:54321'
+});
+
+async function createVmessInbound() {
+  try {
+    await client.login('admin', 'password');
+    
+    // Create a VMess inbound builder
+    let builder = new vmess.VmessBuilder(client)
+      .setRemark('My VMess Inbound')
+      .setPort(8443) // Optional, will auto-generate if not provided
+      .setHttpUpgradeHost('your-domain.com');
+    
+    // Add a client
+    builder.addClient()
+      .setEmail('user@example.com')
+      .setTotalGB(100) // 100 GB traffic limit
+      .setExpiryTime(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    
+    // Build and add the inbound
+    const inbound = await builder.build();
+    const createdInbound = await client.addInbound(inbound);
+    
+    // Update the builder with the server-returned inbound to get all metrics and IDs
+    builder = new vmess.VmessBuilder(client, createdInbound);
+    
+    console.log('Inbound created:', createdInbound);
+    
+    // Get connection link for the client (now with accurate server-assigned values)
+    const link = builder.getClientLink(0, 'your-server-ip.com');
+    console.log('Client connection link:', link);
+  } catch (error) {
+    console.error('Error creating inbound:', error.message);
+  }
+}
+
+createVmessInbound();
+```
+
+### Creating a VLESS Reality Inbound
 
 The library provides a convenient builder pattern for creating Reality inbounds:
 
 ```javascript
+const X3UIClient = require('x3ui-api');
+const vless = require('x3ui-api/src/protocols/vless');
+
+const client = new X3UIClient({
+  baseURL: 'http://your-x3ui-panel.com:54321'
+});
+
 async function createRealityInbound() {
   try {
+    await client.login('admin', 'password');
+    
     // Create a Reality inbound builder
-    const builder = client.createRealityBuilder({
+    let builder = new vless.RealityBuilder(client, {
       remark: 'My Reality Inbound',
       port: 8443 // Optional, will auto-generate if not provided
     });
@@ -79,18 +138,21 @@ async function createRealityInbound() {
       .setFingerprint('chrome');
     
     // Add a client
-    const clientBuilder = builder.addClient()
+    builder.addClient()
       .setEmail('user@example.com')
       .setTotalGB(100) // 100 GB traffic limit
       .setExpiryTime(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
     
     // Build and add the inbound
     const inbound = await builder.build();
-    const result = await client.addInbound(inbound);
+    const createdInbound = await client.addInbound(inbound);
     
-    console.log('Inbound created:', result);
+    // Update the builder with the server-returned inbound to get all metrics and IDs
+    builder = new vless.RealityBuilder(client, createdInbound);
     
-    // Get connection link for the client
+    console.log('Inbound created:', createdInbound);
+    
+    // Get connection link for the client (now with accurate server-assigned values)
     const link = builder.getClientLink(0, 'your-server-ip.com');
     console.log('Client connection link:', link);
   } catch (error) {
@@ -99,24 +161,84 @@ async function createRealityInbound() {
 }
 ```
 
+### Real-World Example
+
+Here's a complete example showing how to create a VMess inbound and get the client link:
+
+```javascript
+const X3UIClient = require('x3ui-api');
+const vmess = require('x3ui-api/src/protocols/vmess');
+
+const client = new X3UIClient({
+    baseURL: 'https://your-panel-url.com/path/',
+});
+
+(async () => {
+    await client.login('username', 'password');
+
+    // Create VMess builder with HTTP Upgrade
+    let vmessBuilder = new vmess.VmessBuilder(client)
+        .setRemark("My VMess Inbound")
+        .setHttpUpgradeHost("your-domain.com");
+
+    // Add the inbound to the server
+    const vmessInbound = await client.addInbound(await vmessBuilder.build());
+    
+    // Create a new builder with the server-returned inbound to get accurate client links
+    vmessBuilder = new vmess.VmessBuilder(client, vmessInbound);
+    
+    // Generate and output the client connection link
+    console.log(vmessBuilder.getClientLink(0, "your-domain.com"));
+})();
+```
+
 ### Managing Existing Inbounds
 
 ```javascript
 async function manageInbounds() {
-  // Get all inbounds
-  const inbounds = await client.getInbounds();
-  
-  if (inbounds.length > 0) {
-    const inboundId = inbounds[0].id;
+  try {
+    // Get all inbounds
+    const inbounds = await client.getInbounds();
     
-    // Update an inbound
-    await client.updateInbound(inboundId, {
-      remark: 'Updated Inbound Name',
-      enable: true
-    });
-    
-    // Delete an inbound
-    await client.deleteInbound(inboundId);
+    if (inbounds.length > 0) {
+      // Get the first inbound
+      const inbound = inbounds[0];
+      const inboundId = inbound.id;
+      
+      // IMPORTANT: When updating an inbound, always start with the complete inbound object
+      // to avoid losing data, then modify only what you need to change
+      
+      // Example 1: Update the remark and enable status
+      inbound.remark = 'Updated Inbound Name';
+      inbound.enable = true;
+      
+      // Send the complete updated inbound back to the server
+      await client.updateInbound(inboundId, inbound);
+      
+      // Example 2: Add a new client to an existing inbound
+      if (inbound.protocol === 'vmess') {
+        // Create a builder with the existing inbound
+        const builder = new vmess.VmessBuilder(client, inbound);
+        
+        // Add a new client
+        builder.addClient()
+          .setEmail('newuser@example.com')
+          .setTotalGB(50);
+        
+        // Build the updated inbound and send it to the server
+        const updatedInbound = await builder.build();
+        await client.updateInbound(inboundId, updatedInbound);
+        
+        // Get the link for the new client
+        const link = builder.getClientLink(builder.clients.length - 1, 'your-server-ip.com');
+        console.log('New client link:', link);
+      }
+      
+      // Example 3: Delete an inbound
+      await client.deleteInbound(inboundId);
+    }
+  } catch (error) {
+    console.error('Error managing inbounds:', error.message);
   }
 }
 ```
@@ -140,18 +262,44 @@ new X3UIClient({
 - `login(username: string, password: string)` - Authenticate with the panel
 - `getSystemStats()` - Get system statistics
 - `getInbounds()` - Get all configured inbounds
-- `addInbound(config)` - Add a new inbound
-- `updateInbound(id, config)` - Update an existing inbound
+- `addInbound(config)` - Add a new inbound and returns the created inbound with server-assigned values
+- `updateInbound(id, config)` - Update an existing inbound with the complete inbound configuration
 - `deleteInbound(id)` - Delete an inbound
 - `getNewX25519Cert()` - Generate a new X25519 certificate
-- `createRealityBuilder(options)` - Create a Reality inbound builder
 
-### RealityBuilder
+### Protocol Builders
 
-Builder class for creating Reality inbounds with a fluent API.
+The library provides protocol-specific builders for creating different types of inbounds:
 
-#### Methods
+#### VMess Builder
 
+```javascript
+const vmess = require('x3ui-api/src/protocols/vmess');
+const builder = new vmess.VmessBuilder(client, options);
+```
+
+Methods:
+- `setPort(port)` - Set the port for the inbound
+- `setRemark(remark)` - Set the name/remark for the inbound
+- `setNetwork(network)` - Set the network type (default: 'httpupgrade')
+- `setSecurity(security)` - Set the security type (default: 'none')
+- `setHttpUpgradePath(path)` - Set the HTTP upgrade path
+- `setHttpUpgradeHost(host)` - Set the HTTP upgrade host
+- `setSniffing(enabled, destOverride, metadataOnly, routeOnly)` - Configure sniffing
+- `setListenIP(ip)` - Set listen IP address
+- `setExpiryTime(timestamp)` - Set inbound expiry time
+- `addClient(options)` - Add a new client to the inbound
+- `getClientLink(clientIndex, host, port)` - Get connection link for a client
+- `build()` - Build the final inbound config
+
+#### VLESS Reality Builder
+
+```javascript
+const vless = require('x3ui-api/src/protocols/vless');
+const builder = new vless.RealityBuilder(client, options);
+```
+
+Methods:
 - `setPort(port)` - Set the port for the inbound
 - `setRemark(remark)` - Set the name/remark for the inbound
 - `setDest(dest)` - Set the destination address (e.g., "yahoo.com:443")
