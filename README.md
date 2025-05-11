@@ -16,6 +16,7 @@ npm install x3ui-api
 - Protocol-specific builders with fluent API:
   - VLESS with Reality support
   - VMess with HTTP Upgrade support
+  - WireGuard support
 - Client management with fluent API
 - TypeScript support
 
@@ -159,6 +160,67 @@ async function createRealityInbound() {
     console.error('Error creating inbound:', error.message);
   }
 }
+```
+
+### Creating a WireGuard Inbound
+
+The library provides a convenient builder pattern for creating WireGuard inbounds:
+
+```javascript
+const X3UIClient = require('x3ui-api');
+const wireguard = require('x3ui-api/src/protocols/wireguard');
+
+const client = new X3UIClient({
+  baseURL: 'http://your-x3ui-panel.com:54321'
+});
+
+async function createWireguardInbound() {
+  try {
+    await client.login('admin', 'password');
+    
+    // Create a WireGuard inbound builder
+    let builder = new wireguard.WireguardBuilder(client)
+      .setRemark('My WireGuard Inbound')
+      .setPort(51820) // WireGuard port, will auto-generate if not provided
+      .setMtu(1420);   // Optional, default is 1420
+    
+    // Keys are automatically generated, but you can set them manually if needed
+    // builder.setSecretKey('your-base64-encoded-secret-key');
+    
+    // Add a client
+    const clientBuilder = builder.addClient()
+      .setEmail('user@example.com')
+      .setTotalGB(100) // 100 GB traffic limit
+      .setExpiryTime(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    
+    // Generate key pair for the client (or you can set them manually)
+    clientBuilder.generateKeyPair();
+    
+    // Set allowed IPs (default is 10.0.0.2/32)
+    clientBuilder.setAllowedIPs(['10.0.0.2/32']);
+    
+    // Optionally generate a pre-shared key for additional security
+    clientBuilder.generatePresharedKey();
+    
+    // Build and add the inbound
+    const inbound = await builder.build();
+    const createdInbound = await client.addInbound(inbound);
+    
+    // Update the builder with the server-returned inbound to get all metrics and IDs
+    builder = new wireguard.WireguardBuilder(client, createdInbound);
+    
+    console.log('Inbound created:', createdInbound);
+    
+    // Get WireGuard configuration for the client
+    const config = builder.getClientConfig(0, 'your-server-ip.com');
+    console.log('Client configuration:');
+    console.log(config);
+  } catch (error) {
+    console.error('Error creating inbound:', error.message);
+  }
+}
+
+createWireguardInbound();
 ```
 
 ### Real-World Example
@@ -312,6 +374,44 @@ Methods:
 - `addClient(options)` - Add a new client to the inbound
 - `getClientLink(clientIndex, host)` - Get connection link for a client
 - `build()` - Build the final inbound config
+
+#### WireGuard Builder
+
+```javascript
+const wireguard = require('x3ui-api/src/protocols/wireguard');
+const builder = new wireguard.WireguardBuilder(client, options);
+```
+
+Methods:
+- `setPort(port)` - Set the port for the inbound
+- `setRemark(remark)` - Set the name/remark for the inbound
+- `setMtu(mtu)` - Set the MTU value (default: 1420)
+- `setSecretKey(secretKey)` - Set the server's secret key (automatically generates if not provided)
+- `setNoKernelTun(noKernelTun)` - Set whether to disable kernel TUN support
+- `setSniffing(enabled, destOverride, metadataOnly, routeOnly)` - Configure sniffing
+- `setListenIP(ip)` - Set listen IP address
+- `setExpiryTime(timestamp)` - Set inbound expiry time
+- `addClient(options)` - Add a new client to the inbound
+- `getClientLink(clientIndex, host, port)` - Get connection link for a client
+- `getClientConfig(clientIndex, host, port)` - Get WireGuard configuration file content for a client
+- `build()` - Build the final inbound config
+
+##### WireGuard Client Builder
+
+Methods:
+- `setPrivateKey(privateKey)` - Set client's private key
+- `setPublicKey(publicKey)` - Set client's public key
+- `setPreSharedKey(preSharedKey)` - Set pre-shared key for additional security
+- `setAllowedIPs(allowedIPs)` - Set allowed IP ranges (default: ['10.0.0.2/32'])
+- `setKeepAlive(keepAlive)` - Set keep-alive interval in seconds
+- `generateKeyPair()` - Generate a new key pair for the client
+- `generatePresharedKey()` - Generate a new pre-shared key
+- `setEmail(email)` - Set client email
+- `setTotalGB(gb)` - Set total traffic limit in GB
+- `setExpiryTime(timestamp)` - Set client expiry time
+- `setTgId(id)` - Set Telegram ID
+- `getLink(host, port)` - Get WireGuard configuration as text
+- `getConfigFile(host, port)` - Get WireGuard configuration file content
 
 ## License
 
