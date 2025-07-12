@@ -202,3 +202,5 @@ module.exports = class WireguardBuilder {
         };
     }
 }
+
+module.exports.default = module.exports;

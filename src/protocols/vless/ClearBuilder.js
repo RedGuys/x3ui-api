@@ -1,6 +1,6 @@
-const VmessClientBuilder = require('./VmessClientBuilder');
+const ClearClientBuilder = require("./ClearClientBuilder");
 
-module.exports = class VmessBuilder {
+module.exports = class ClearBuilder {
     constructor(client, options = {}) {
         this.client = client;
         // Initialize from InboundConfig
@@ -10,40 +10,11 @@ module.exports = class VmessBuilder {
         this.listenIP = options.listen || '';
         this.expiryTime = options.expiryTime || 0;
         this.enable = true;
-        this.up = options.up || 0;
-        this.down = options.down || 0;
-        this.total = options.total || 0;
 
-        // Initialize from StreamSettings
+        // Initialize from StreamSettings and RealitySettings
         const streamSettings = typeof options.streamSettings === 'string'
             ? JSON.parse(options.streamSettings)
             : options.streamSettings || {};
-
-        this.network = streamSettings.network || 'httpupgrade';
-        this.security = streamSettings.security || 'none';
-
-        // Initialize httpupgrade settings
-        this.httpupgradeSettings = streamSettings.httpupgradeSettings || {
-            acceptProxyProtocol: false,
-            path: '/',
-            host: '',
-            headers: {}
-        };
-
-        // Initialize sniffing
-        this.sniffing = options.sniffing || {
-            enabled: false,
-            destOverride: ['http', 'tls', 'quic', 'fakedns'],
-            metadataOnly: false,
-            routeOnly: false
-        };
-
-        // Initialize allocate
-        this.allocate = options.allocate || {
-            strategy: 'always',
-            refresh: 5,
-            concurrency: 3
-        };
 
         // Initialize clients
         this.clients = [];
@@ -68,36 +39,6 @@ module.exports = class VmessBuilder {
         return this;
     }
 
-    setNetwork(network) {
-        this.network = network;
-        return this;
-    }
-
-    setSecurity(security) {
-        this.security = security;
-        return this;
-    }
-
-    setHttpUpgradePath(path) {
-        this.httpupgradeSettings.path = path;
-        return this;
-    }
-
-    setHttpUpgradeHost(host) {
-        this.httpupgradeSettings.host = host;
-        return this;
-    }
-
-    setSniffing(enabled, destOverride = ['http', 'tls', 'quic', 'fakedns'], metadataOnly = false, routeOnly = false) {
-        this.sniffing = {
-            enabled,
-            destOverride,
-            metadataOnly,
-            routeOnly
-        };
-        return this;
-    }
-
     setListenIP(ip) {
         this.listenIP = ip;
         return this;
@@ -109,25 +50,30 @@ module.exports = class VmessBuilder {
     }
 
     addClient(options = {}) {
-        const builder = new VmessClientBuilder(this);
+        const builder = new ClearClientBuilder(this);
         if (options.id) builder.setId(options.id);
         if (options.email) builder.setEmail(options.email);
         if (options.totalGB) builder.setTotalGB(options.totalGB);
         if (options.expiryTime) builder.setExpiryTime(options.expiryTime);
         if (options.tgId) builder.setTgId(options.tgId);
-        if (options.security) builder.setSecurity(options.security);
-        if (options.limitIp) builder.setLimitIp(options.limitIp);
-
         this.clients.push(builder);
         return builder;
     }
 
-    getClientLink(clientIndex = 0, host, port) {
+    getClientLinkByIndex(clientIndex = 0, host) {
         if (clientIndex < 0 || clientIndex >= this.clients.length) {
             throw new Error('Invalid client index');
         }
         const client = this.clients[clientIndex];
-        return client.getLink(host || this.listenIP || 'localhost', port || this.port);
+        return client.getLink(host || this.listenIP || 'localhost', this.port);
+    }
+
+    getClientLinkByEmail(email, host) {
+        const client = this.clients.find(client => client.email === email);
+        if (!client) {
+            throw new Error('Client not found');
+        }
+        return client.getLink(host || this.listenIP || 'localhost', this.port);
     }
 
     generateRandomPort() {
@@ -158,32 +104,45 @@ module.exports = class VmessBuilder {
         // Build all clients
         const clientConfigs = await Promise.all(this.clients.map(builder => builder.build()));
 
-        // Create tag for inbound
-        const tag = `inbound-${this.port}`;
-
-        // Build the complete inbound configuration
         return {
-            up: this.up,
-            down: this.down,
-            total: this.total,
+            id: this.id,
+            up: 0,
+            down: 0,
+            total: 0,
             remark: this.remark,
-            enable: this.enable,
+            enable: true,
             expiryTime: this.expiryTime,
             listen: this.listenIP,
             port: this.port,
-            protocol: 'vmess',
+            protocol: 'vless',
             settings: {
-                clients: clientConfigs
+                clients: clientConfigs,
+                decryption: 'none',
+                fallbacks: []
             },
             streamSettings: {
-                network: this.network,
-                security: this.security,
+                network: 'tcp',
+                security: 'none',
                 externalProxy: [],
-                httpupgradeSettings: this.httpupgradeSettings
+                tcpSettings: {
+                    acceptProxyProtocol: false,
+                    header: {
+                        type: 'none'
+                    }
+                }
             },
-            tag,
-            sniffing: this.sniffing,
-            allocate: this.allocate
+            tag: `inbound-${this.port}`,
+            sniffing: {
+                enabled: false,
+                destOverride: ['http', 'tls', 'quic', 'fakedns'],
+                metadataOnly: false,
+                routeOnly: false
+            },
+            allocate: {
+                strategy: 'always',
+                refresh: 5,
+                concurrency: 3
+            }
         };
     }
 }

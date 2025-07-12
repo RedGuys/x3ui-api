@@ -1,6 +1,6 @@
 {
   "name": "x3ui-api",
-  "version": "1.0.5",
+  "version": "1.0.7-1",
   "description": "API client for x3ui panel",
   "main": "src/index.js",
   "types": "src/index.d.ts",

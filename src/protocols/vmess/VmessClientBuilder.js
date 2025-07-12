@@ -90,3 +90,5 @@ module.exports = class VmessClientBuilder {
         return vmessLink;
     }
 }
+
+module.exports.default = module.exports;

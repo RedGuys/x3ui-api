@@ -1,11 +1,17 @@
 import X3UIClient from "./core/X3UIClient";
 
+export type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 export default X3UIClient;
 
 export interface X3UIConfig {
     baseURL: string;
     token?: string;
     parseJSONSettings?: boolean;
+    username?: string;
+    password?: string;
 }
 
 export interface LoginResponse {

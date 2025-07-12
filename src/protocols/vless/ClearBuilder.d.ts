@@ -1,7 +1,7 @@
 import X3UIClient, {ClientSettings, InboundConfig, DeepPartial} from "../../index";
 import RealityClientBuilder from "./RealityClientBuilder";
 
-export default class RealityBuilder {
+export default class ClearBuilder {
 
     constructor(client: X3UIClient, inbound?: DeepPartial<InboundConfig>);
 
@@ -14,31 +14,6 @@ export default class RealityBuilder {
      * Set the remark/name for the inbound
      */
     setRemark(remark: string): this;
-
-    /**
-     * Set the destination address (e.g. "yahoo.com:443")
-     */
-    setDest(dest: string): this;
-
-    /**
-     * Set server names for SNI
-     */
-    setServerNames(names: string[]): this;
-
-    /**
-     * Set Reality keypair. If not provided, will be auto-generated
-     */
-    setKeyPair(privateKey: string, publicKey: string): this;
-
-    /**
-     * Set short IDs for Reality. If not provided, random ones will be generated
-     */
-    setShortIds(ids: string[]): this;
-
-    /**
-     * Set browser fingerprint. Defaults to "chrome"
-     */
-    setFingerprint(fingerprint: string): this;
 
     /**
      * Set listen IP address. Defaults to empty string

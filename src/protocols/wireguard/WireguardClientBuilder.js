@@ -86,3 +86,5 @@ module.exports = class WireguardClientBuilder extends ClientBuilder {
         return config;
     }
 }
+
+module.exports.default = module.exports;

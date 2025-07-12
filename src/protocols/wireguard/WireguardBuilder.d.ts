@@ -1,5 +1,5 @@
 import WireguardClientBuilder from './WireguardClientBuilder';
-import {ClientSettings} from "../../index";
+import { ClientSettings, DeepPartial } from "../../index";
 
 /**
  * WireguardBuilder class for creating and managing Wireguard server configurations.
@@ -77,7 +77,7 @@ export default class WireguardBuilder {
      * @param options - Optional client settings
      * @returns A new WireguardClientBuilder instance for configuring the client
      */
-    addClient(options?: Partial<ClientSettings>): WireguardClientBuilder;
+    addClient(options?: DeepPartial<ClientSettings>): WireguardClientBuilder;
     
     /**
      * Generates a connection link for a client.

@@ -107,11 +107,19 @@ module.exports = class RealityBuilder {
         return builder;
     }
 
-    getClientLink(clientIndex = 0, host) {
+    getClientLinkByIndex(clientIndex = 0, host) {
         if (clientIndex < 0 || clientIndex >= this.clients.length) {
             throw new Error('Invalid client index');
         }
         const client = this.clients[clientIndex];
+        return client.getLink(host || this.listenIP || 'localhost', this.port);
+    }
+
+    getClientLinkByEmail(email, host) {
+        const client = this.clients.find(client => client.email === email);
+        if (!client) {
+            throw new Error('Client not found');
+        }
         return client.getLink(host || this.listenIP || 'localhost', this.port);
     }
 
@@ -221,3 +229,5 @@ module.exports = class RealityBuilder {
         };
     }
 }
+
+module.exports.default = module.exports;

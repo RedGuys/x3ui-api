@@ -55,3 +55,5 @@ module.exports = class ClientBuilder {
         };
     }
 }
+
+module.exports.default = module.exports;

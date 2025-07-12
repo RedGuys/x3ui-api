@@ -1,8 +1,13 @@
 const axios = require("axios");
 
 module.exports = class X3UIClient {
+
+    isAuthed = false;
+    config = {};
+
     constructor(config) {
-        this.parseJSONSettings = config.parseJSONSettings || true;
+        this.config = config;
+        this.config.parseJSONSettings ??= true;
         this.client = axios.create({
             baseURL: config.baseURL,
             headers: config.token ? {
@@ -15,14 +20,14 @@ module.exports = class X3UIClient {
 
     /**
      * Login to the x3ui panel
-     * @param {string} username Panel username
-     * @param {string} password Panel password
+     * @param {string?} username Panel username
+     * @param {string?} password Panel password
      * @returns {Promise<{success: boolean, msg: string, obj: any}>} Login response with success status and token
      */
     async login(username, password) {
         const formData = new URLSearchParams();
-        formData.append('username', username);
-        formData.append('password', password);
+        formData.append('username', username || this.config.username);
+        formData.append('password', password || this.config.password);
 
         const response = await this.client.post('/login', formData, {
             headers: {
@@ -32,12 +37,16 @@ module.exports = class X3UIClient {
 
         if (response.data.success) {
             this.client.defaults.headers.Cookie = `lang=en-US; ${response.headers.get("set-cookie")[0].split(";")[0]}`;
+            this.isAuthed = true;
         }
 
         return response.data;
     }
 
     async getSystemStats() {
+        if(!this.isAuthed) {
+            await this.login();
+        }
         const response = await this.client.post('/server/status');
         return response.data.obj;
     }
@@ -61,6 +70,9 @@ module.exports = class X3UIClient {
      * }>>}
      */
     async getInbounds() {
+        if(!this.isAuthed) {
+            await this.login();
+        }
         const response = await this.client.get('/panel/api/inbounds/list');
         let inbounds = response.data.obj;
         if (this.parseJSONSettings) {
@@ -106,6 +118,9 @@ module.exports = class X3UIClient {
      * @returns {Promise<void>}
      */
     async addInbound(config) {
+        if(!this.isAuthed) {
+            await this.login();
+        }
         config = this.stringifyInbound(config);
         const response = await this.client.post('/panel/api/inbounds/add', config);
         if(!response.data.success)
@@ -120,6 +135,9 @@ module.exports = class X3UIClient {
      * @returns {Promise<void>}
      */
     async updateInbound(id, config) {
+        if(!this.isAuthed) {
+            await this.login();
+        }
         config = this.stringifyInbound(config);
         const response = await this.client.post(`/panel/api/inbounds/update/${id}`, config);
         if(!response.data.success)
@@ -133,6 +151,9 @@ module.exports = class X3UIClient {
      * @returns {Promise<void>}
      */
     async deleteInbound(id) {
+        if(!this.isAuthed) {
+            await this.login();
+        }
         await this.client.post(`/panel/api/inbounds/del/${id}`);
     }
 
@@ -141,7 +162,12 @@ module.exports = class X3UIClient {
      * @returns {Promise<{privateKey: string, publicKey: string}>} New X25519 key pair
      */
     async getNewX25519Cert() {
+        if(!this.isAuthed) {
+            await this.login();
+        }
         const response = await this.client.post('/server/getNewX25519Cert');
         return response.data.obj;
     }
 }
+
+module.exports.default = module.exports;

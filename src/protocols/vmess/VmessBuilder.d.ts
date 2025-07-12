@@ -1,4 +1,4 @@
-import X3UIClient, {ClientSettings, InboundConfig} from "../../index";
+import X3UIClient, { ClientSettings, DeepPartial, InboundConfig } from "../../index";
 import VmessClientBuilder from "./VmessClientBuilder";
 
 /**
@@ -6,7 +6,7 @@ import VmessClientBuilder from "./VmessClientBuilder";
  */
 export default class VmessBuilder {
 
-    constructor(client: X3UIClient, inbound?: Partial<InboundConfig>);
+    constructor(client: X3UIClient, inbound?: DeepPartial<InboundConfig>);
 
     /**
      * Set the port for the inbound. If not provided, will auto-generate unused port
@@ -56,7 +56,7 @@ export default class VmessBuilder {
     /**
      * Add a new client to the inbound
      */
-    addClient(options?: Partial<ClientSettings>): VmessClientBuilder;
+    addClient(options?: DeepPartial<ClientSettings>): VmessClientBuilder;
 
     /**
      * Get connection link for a client
