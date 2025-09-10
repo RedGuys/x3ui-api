@@ -29,8 +29,7 @@ const X3UIClient = require('x3ui-api');
 
 // Initialize client
 const client = new X3UIClient({
-  baseURL: 'http://your-x3ui-panel.com:54321',
-  parseJSONSettings: true // Default: true - automatically parse JSON settings
+  baseURL: 'http://your-x3ui-panel.com:54321'
 });
 
 // Login to panel
@@ -315,7 +314,6 @@ async function manageInbounds() {
 new X3UIClient({
   baseURL: string,       // Required: URL to your x3ui panel
   token?: string,        // Optional: Authentication token (if already logged in)
-  parseJSONSettings?: boolean // Optional: Auto-parse JSON settings (default: true)
 })
 ```
 

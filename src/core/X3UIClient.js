@@ -7,7 +7,6 @@ module.exports = class X3UIClient {
 
     constructor(config) {
         this.config = config;
-        this.config.parseJSONSettings ??= true;
         this.client = axios.create({
             baseURL: config.baseURL,
             headers: config.token ? {
@@ -44,7 +43,7 @@ module.exports = class X3UIClient {
     }
 
     async getSystemStats() {
-        if(!this.isAuthed) {
+        if (!this.isAuthed) {
             await this.login();
         }
         const response = await this.client.post('/server/status');
@@ -70,24 +69,19 @@ module.exports = class X3UIClient {
      * }>>}
      */
     async getInbounds() {
-        if(!this.isAuthed) {
+        if (!this.isAuthed) {
             await this.login();
         }
         const response = await this.client.get('/panel/api/inbounds/list');
         let inbounds = response.data.obj;
-        if (this.parseJSONSettings) {
-            inbounds = inbounds.map(inbound => this.parseInbound(inbound));
-        }
-        return inbounds;
+        return inbounds.map(inbound => this.parseInbound(inbound));
     }
 
     parseInbound(inbound) {
-        if (this.parseJSONSettings) {
-            inbound.settings = inbound.settings && inbound.settings.length > 0 ? JSON.parse(inbound.settings) : {};
-            inbound.streamSettings = inbound.streamSettings && inbound.streamSettings.length > 0 ? JSON.parse(inbound.streamSettings) : {};
-            inbound.sniffing = inbound.sniffing && inbound.sniffing.length > 0 ? JSON.parse(inbound.sniffing) : {};
-            inbound.allocate = inbound.allocate && inbound.allocate.length > 0 ? JSON.parse(inbound.allocate) : {};
-        }
+        inbound.settings = inbound.settings && inbound.settings.length > 0 ? JSON.parse(inbound.settings) : {};
+        inbound.streamSettings = inbound.streamSettings && inbound.streamSettings.length > 0 ? JSON.parse(inbound.streamSettings) : {};
+        inbound.sniffing = inbound.sniffing && inbound.sniffing.length > 0 ? JSON.parse(inbound.sniffing) : {};
+        inbound.allocate = inbound.allocate && inbound.allocate.length > 0 ? JSON.parse(inbound.allocate) : {};
         return inbound;
     }
 
@@ -118,12 +112,12 @@ module.exports = class X3UIClient {
      * @returns {Promise<void>}
      */
     async addInbound(config) {
-        if(!this.isAuthed) {
+        if (!this.isAuthed) {
             await this.login();
         }
         config = this.stringifyInbound(config);
         const response = await this.client.post('/panel/api/inbounds/add', config);
-        if(!response.data.success)
+        if (!response.data.success)
             throw new Error(response.data.msg);
         return this.parseInbound(response.data.obj);
     }
@@ -135,12 +129,12 @@ module.exports = class X3UIClient {
      * @returns {Promise<void>}
      */
     async updateInbound(id, config) {
-        if(!this.isAuthed) {
+        if (!this.isAuthed) {
             await this.login();
         }
         config = this.stringifyInbound(config);
         const response = await this.client.post(`/panel/api/inbounds/update/${id}`, config);
-        if(!response.data.success)
+        if (!response.data.success)
             throw new Error(response.data.msg);
         return this.parseInbound(response.data.obj);
     }
@@ -151,7 +145,7 @@ module.exports = class X3UIClient {
      * @returns {Promise<void>}
      */
     async deleteInbound(id) {
-        if(!this.isAuthed) {
+        if (!this.isAuthed) {
             await this.login();
         }
         await this.client.post(`/panel/api/inbounds/del/${id}`);
@@ -162,7 +156,7 @@ module.exports = class X3UIClient {
      * @returns {Promise<{privateKey: string, publicKey: string}>} New X25519 key pair
      */
     async getNewX25519Cert() {
-        if(!this.isAuthed) {
+        if (!this.isAuthed) {
             await this.login();
         }
         const response = await this.client.post('/server/getNewX25519Cert');

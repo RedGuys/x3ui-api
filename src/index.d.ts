@@ -9,7 +9,6 @@ export default X3UIClient;
 export interface X3UIConfig {
     baseURL: string;
     token?: string;
-    parseJSONSettings?: boolean;
     username?: string;
     password?: string;
 }
