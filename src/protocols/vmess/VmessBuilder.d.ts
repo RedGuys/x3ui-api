@@ -66,6 +66,13 @@ export default class VmessBuilder {
     getClientLink(clientIndex?: number, host?: string): string;
 
     /**
+     * Get connection link for a client
+     * @param email Email of the client
+     * @param host Optional host address (defaults to listenIP or 'localhost')
+     */
+    getClientLinkByEmail(email: string, host?: string): string;
+
+    /**
      * Generate a random port number
      */
     generateRandomPort(): number;

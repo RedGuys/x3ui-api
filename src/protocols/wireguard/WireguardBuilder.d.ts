@@ -87,6 +87,13 @@ export default class WireguardBuilder {
      * @returns A formatted connection link string
      */
     getClientLink(clientIndex?: number, host?: string, port?: number): string;
+
+    /**
+     * Get connection link for a client
+     * @param email Email of the client
+     * @param host Optional host address (defaults to listenIP or 'localhost')
+     */
+    getClientLinkByEmail(email: string, host?: string): string;
     
     /**
      * Generates a configuration file for a client.

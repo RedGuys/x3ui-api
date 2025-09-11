@@ -132,6 +132,14 @@ module.exports = class WireguardBuilder {
         return client.getLink(host || this.listenIP || 'localhost', port || this.port);
     }
 
+    getClientLinkByEmail(email, host) {
+        const client = this.clients.find(client => client.email === email);
+        if (!client) {
+            throw new Error('Client not found');
+        }
+        return client.getLink(host || this.listenIP || 'localhost', this.port);
+    }
+
     getClientConfig(clientIndex = 0, host, port) {
         if (clientIndex < 0 || clientIndex >= this.clients.length) {
             throw new Error('Invalid client index');

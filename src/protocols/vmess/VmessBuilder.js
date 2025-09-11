@@ -130,6 +130,14 @@ module.exports = class VmessBuilder {
         return client.getLink(host || this.listenIP || 'localhost', port || this.port);
     }
 
+    getClientLinkByEmail(email, host) {
+        const client = this.clients.find(client => client.email === email);
+        if (!client) {
+            throw new Error('Client not found');
+        }
+        return client.getLink(host || this.listenIP || 'localhost', this.port);
+    }
+
     generateRandomPort() {
         return Math.floor(Math.random() * (65535 - 1024) + 1024);
     }
