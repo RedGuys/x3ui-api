@@ -2,6 +2,10 @@
 
 A Node.js client for interacting with the x3ui panel API. This library provides a simple interface to manage X-UI inbounds, clients, and system statistics.
 
+## Requirements
+
+- x3-ui v2.7.0 or higher (for lover x3-ui versions, use v1.0.9-1 version of this library)
+
 ## Installation
 
 ```bash

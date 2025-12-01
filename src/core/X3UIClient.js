@@ -46,7 +46,7 @@ module.exports = class X3UIClient {
         if (!this.isAuthed) {
             await this.login();
         }
-        const response = await this.client.post('/server/status');
+        const response = await this.client.post('/panel/api/server/status');
         return response.data.obj;
     }
 
@@ -153,13 +153,14 @@ module.exports = class X3UIClient {
 
     /**
      * Get new X25519 certificate
+     * @deprecated Use {@link getNewVlessEnc} for new versions of X3-UI
      * @returns {Promise<{privateKey: string, publicKey: string}>} New X25519 key pair
      */
     async getNewX25519Cert() {
         if (!this.isAuthed) {
             await this.login();
         }
-        const response = await this.client.post('/server/getNewX25519Cert');
+        const response = await this.client.post('/panel/api/server/getNewX25519Cert');
         return response.data.obj;
     }
 }
