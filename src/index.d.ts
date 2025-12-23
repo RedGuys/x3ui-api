@@ -31,11 +31,11 @@ export interface InboundConfig {
     listen: string;
     port: number;
     protocol: string;
-    settings: string | InboundSettings;
-    streamSettings: string | StreamSettings;
+    settings: InboundSettings;
+    streamSettings: StreamSettings;
     tag: string;
-    sniffing: string | SniffingSettings;
-    allocate: string | AllocateSettings;
+    sniffing: SniffingSettings;
+    allocate: AllocateSettings;
 }
 
 export interface AllocateSettings {
@@ -100,7 +100,8 @@ export interface InboundSettings {
 
 export interface ClientSettings {
     id: string;
-    flow: string;
+    flow?: string;
+    security?: string;
     email: string;
     limitIp: number;
     totalGB: number;

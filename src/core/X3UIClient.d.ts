@@ -1,5 +1,6 @@
 import {AxiosInstance} from "axios";
 import {
+    ClientSettings,
     DeepPartial,
     InboundConfig,
     LoginResponse,
@@ -19,6 +20,8 @@ export default class X3UIClient {
     getInbounds(): Promise<InboundConfig[]>;
 
     addInbound(config: Omit<InboundConfig, 'id'>): Promise<InboundConfig>;
+
+    addClient(id: number, client: DeepPartial<ClientSettings>): Promise<void>;
 
     updateInbound(id: number, config: DeepPartial<InboundConfig>): Promise<void>;
 

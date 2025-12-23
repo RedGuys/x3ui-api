@@ -160,7 +160,18 @@ module.exports = class X3UIClient {
         if (!this.isAuthed) {
             await this.login();
         }
-        const response = await this.client.post('/panel/api/server/getNewX25519Cert');
+        const response = await this.client.get('/panel/api/server/getNewX25519Cert');
+        return response.data.obj;
+    }
+
+    async addClient(id, client) {
+        if (!this.isAuthed) {
+            await this.login();
+        }
+        const response = await this.client.post(`/panel/api/inbounds/addClient`, {
+            id,
+            settings: JSON.stringify({clients: [client]})
+        });
         return response.data.obj;
     }
 }
